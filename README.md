@@ -1,13 +1,24 @@
+# 🎭 The Claude Orchestrator
+*AI-Powered Team Management for 24/7 Development*
+
 ![Orchestrator Hero](/Orchestrator.png)
 
-**Run AI agents 24/7 while you sleep** - The Tmux Orchestrator enables Claude agents to work autonomously, schedule their own check-ins, and coordinate across multiple projects without human intervention.
+**Transform your development workflow with autonomous AI agents** - The Claude Orchestrator creates a sophisticated multi-agent system where specialized Claude instances work together as a complete development team, managing projects, writing code, and coordinating tasks while you sleep.
 
-## 🤖 Key Capabilities & Autonomous Features
+## 🌟 Revolutionary Features
 
-- **Self-trigger** - Agents schedule their own check-ins and continue work autonomously
-- **Coordinate** - Project managers assign tasks to engineers across multiple codebases  
-- **Persist** - Work continues even when you close your laptop
-- **Scale** - Run multiple teams working on different projects simultaneously
+### 🤖 Autonomous Agent Ecosystem
+- **Self-Scheduling**: Agents automatically plan their own check-ins and continue work
+- **Role Specialization**: Each agent has distinct expertise (PM, Developer, QA, DevOps)
+- **Cross-Project Intelligence**: Knowledge sharing between multiple concurrent projects
+- **24/7 Operations**: Work continues even when your laptop is closed
+
+### 🏗️ BMAD-Inspired Architecture
+Based on proven methodologies from the BMAD Method for sophisticated AI orchestration:
+- **Two-Phase Development**: Planning phase → Implementation phase
+- **Context-Engineered Stories**: Detailed specifications for each development task
+- **Human-in-the-Loop**: Seamless integration of human oversight and AI autonomy
+- **Domain Adaptability**: Extensible for any type of project or industry
 
 ## 🏗️ Architecture
 
@@ -89,10 +100,23 @@ in window 1 to implement it. Schedule check-ins every 30 minutes."
 ./schedule_with_note.sh 30 "Check PM progress on auth system"
 ```
 
-### Option 2: Full Orchestrator Setup
+### Option 2: Python Orchestrator (Recommended)
 
 ```bash
-# Start the orchestrator
+# Use the advanced Python orchestrator
+./orchestrator.py start my-web-app /path/to/your/project --template startup-team
+
+# Monitor progress
+./orchestrator.py status --project my-web-app
+
+# For advanced features (AI monitoring, intelligent task assignment)
+python3 advanced_features.py
+```
+
+### Option 3: Manual Orchestrator Setup
+
+```bash
+# Start the orchestrator manually
 tmux new-session -s orchestrator
 claude --dangerously-skip-permissions
 
@@ -246,11 +270,22 @@ The orchestrator can share insights between projects:
 
 ## 📚 Core Files
 
+- `orchestrator.py` - Main orchestrator with configuration management
+- `advanced_features.py` - AI-powered monitoring and automation
 - `send-claude-message.sh` - Simplified agent communication script
 - `schedule_with_note.sh` - Self-scheduling functionality
 - `tmux_utils.py` - Tmux interaction utilities
-- `CLAUDE.md` - Agent behavior instructions
+- `CLAUDE.md` - Agent behavior instructions and patterns
 - `LEARNINGS.md` - Accumulated knowledge base
+
+## 📁 Documentation Structure
+
+- `docs/QUICK_START.md` - Get started in 5 minutes
+- `docs/AGENT_ROLES.md` - Detailed agent specifications
+- `docs/CONFIGURATION.md` - Advanced customization guide
+- `docs/EXAMPLE_PROMPTS.md` - Battle-tested prompts and templates
+- `docs/WORKFLOWS.md` - Proven development workflows
+- `examples/` - Complete project examples and templates
 
 ## 🤝 Contributing & Optimization
 
