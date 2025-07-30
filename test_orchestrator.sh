@@ -74,19 +74,22 @@ eval "$(sed -n '/^send_message()/,/^}/p' "$SCRIPT_DIR/orchestrator.sh")"
 test_project_type_detection() {
     echo "Testing project type detection..."
     
-    setup_test_project "react"
+    # Clean and setup React project
+    rm -rf "$TEST_PROJECT_DIR" && setup_test_project "react"
     PROJECT_PATH="$TEST_PROJECT_DIR"
     result=$(detect_project_type)
     [ "$result" = "react" ] || { echo "FAIL: Expected 'react', got '$result'"; return 1; }
     echo "✓ React detection works"
     
-    setup_test_project "django"
+    # Clean and setup Django project
+    rm -rf "$TEST_PROJECT_DIR" && setup_test_project "django"
     PROJECT_PATH="$TEST_PROJECT_DIR"
     result=$(detect_project_type)
     [ "$result" = "django" ] || { echo "FAIL: Expected 'django', got '$result'"; return 1; }
     echo "✓ Django detection works"
     
-    setup_test_project "go"
+    # Clean and setup Go project
+    rm -rf "$TEST_PROJECT_DIR" && setup_test_project "go"
     PROJECT_PATH="$TEST_PROJECT_DIR"
     result=$(detect_project_type)
     [ "$result" = "go" ] || { echo "FAIL: Expected 'go', got '$result'"; return 1; }
