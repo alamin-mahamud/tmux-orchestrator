@@ -81,8 +81,17 @@ send_message() {
     local target="$1"
     local message="$2"
     
+    # Check if window exists before sending message
+    if ! tmux list-windows -t "${target%:*}" | grep -q "${target#*:}:"; then
+        echo "Warning: Window $target not found, skipping message"
+        return 1
+    fi
+    
     echo "$message" | tmux load-buffer -
-    tmux paste-buffer -t "$target"
+    tmux paste-buffer -t "$target" 2>/dev/null || {
+        echo "Warning: Failed to send message to $target"
+        return 1
+    }
     tmux send-keys -t "$target" Enter
 }
 
@@ -172,9 +181,10 @@ main() {
     esac
     
     # Start orchestrator
+    echo "Starting orchestrator in window 0..."
     tmux select-window -t "$SESSION_NAME:0"
     tmux send-keys -t "$SESSION_NAME:0" "claude --dangerously-skip-permissions" Enter
-    sleep 5
+    sleep 8
     
     # Brief orchestrator
     send_message "$SESSION_NAME:0" "You are the Orchestrator for this $PROJECT_TYPE project ($TEAM_SIZE team). Monitor agent health every 15 minutes. Schedule recurring checks with: ./schedule_with_note.sh 15 'Health check' '$SESSION_NAME:0'. Resolve conflicts and blockers. Make final decisions. Start by scheduling your first health check NOW."
