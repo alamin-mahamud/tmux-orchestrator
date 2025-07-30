@@ -186,14 +186,16 @@ test_error_handling() {
 test_schedule_script() {
     echo "Testing schedule script..."
     
+    # Ensure work directory exists
+    mkdir -p "$HOME/work"
+    
     # Test schedule script with minimal parameters
     result=$("$SCRIPT_DIR/schedule_with_note.sh" 1 "Test note" "dummy:0" 2>&1)
-    [[ "$result" == *"Scheduled successfully"* ]] || { echo "FAIL: Schedule script failed"; return 1; }
+    [[ "$result" == *"Scheduled successfully"* ]] || { echo "FAIL: Schedule script failed: $result"; return 1; }
     echo "✓ Schedule script works"
     
     # Check if note file was created
-    [ -f "$HOME/work/next_check_note.txt" ] || mkdir -p "$HOME/work"
-    [ -f "$HOME/work/next_check_note.txt" ] || { echo "FAIL: Note file not created"; return 1; }
+    [ -f "$HOME/work/next_check_note.txt" ] || { echo "FAIL: Note file not created at $HOME/work/next_check_note.txt"; return 1; }
     echo "✓ Note file creation works"
     
     echo "✅ Schedule script tests passed"
