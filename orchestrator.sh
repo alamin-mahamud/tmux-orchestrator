@@ -39,11 +39,11 @@ detect_project_type() {
 # Simple team size detection
 get_team_size() {
     local loc=$(find "$PROJECT_PATH" -name "*.py" -o -name "*.js" -o -name "*.ts" -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}' || echo "0")
-    
+
     if [[ $loc -lt 1000 ]]; then
         echo "small"
     elif [[ $loc -lt 10000 ]]; then
-        echo "medium" 
+        echo "medium"
     else
         echo "large"
     fi
@@ -53,7 +53,7 @@ get_team_size() {
 start_dev_server() {
     local project_type="$1"
     local dev_window="$2"
-    
+
     case "$project_type" in
         "react")
             tmux send-keys -t "$SESSION_NAME:$dev_window" "npm install && npm start" Enter
@@ -80,13 +80,17 @@ start_dev_server() {
 send_message() {
     local target="$1"
     local message="$2"
-    
+
     # Check if window exists before sending message
-    if ! tmux list-windows -t "${target%:*}" | grep -q "${target#*:}:"; then
+    # Support both window:name and session:window formats
+    local session="${target%:*}"
+    local window="${target#*:}"
+    
+    if ! tmux list-windows -t "$session" -F '#{window_name}' | grep -q "^${window}$"; then
         echo "Warning: Window $target not found, skipping message"
         return 1
     fi
-    
+
     echo "$message" | tmux load-buffer -
     tmux paste-buffer -t "$target" 2>/dev/null || {
         echo "Warning: Failed to send message to $target"
@@ -95,31 +99,117 @@ send_message() {
     tmux send-keys -t "$target" Enter
 }
 
+# Load project specs - adapt to customer's existing structure
+load_custom_requirements() {
+    local project_path="$1"
+    local requirements=""
+    
+    # Find customer's existing directories (don't force them to change)
+    local common_dirs=(
+        "specs" "epics" "stories" "requirements" 
+        "docs" ".claude" ".cursor" ".ai"
+    )
+    
+    echo "🔍 Looking for your project specs..." >&2
+    
+    # Scan each directory if it exists
+    for dir in "${common_dirs[@]}"; do
+        local full_path="$project_path/$dir"
+        
+        if [[ -d "$full_path" ]]; then
+            echo "📁 Found: $dir/" >&2
+            
+            # Read all markdown files in the directory
+            while IFS= read -r -d '' file; do
+                if [[ -f "$file" ]]; then
+                    local filename=$(basename "$file")
+                    echo "📄 Reading: $dir/$filename" >&2
+                    
+                    if [[ -n "$requirements" ]]; then
+                        requirements="$requirements
+
+--- From $dir/$filename ---
+$(cat "$file")"
+                    else
+                        requirements="$(cat "$file")"
+                    fi
+                fi
+            done < <(find "$full_path" -name "*.md" -type f -print0 2>/dev/null)
+        fi
+    done
+    
+    # Also check root-level files (common patterns)
+    local root_files=(
+        "requirements.md" "REQUIREMENTS.md" "specs.md" "SPECS.md"
+        "README.md" "CLAUDE.md" "project.md" "PROJECT.md"
+    )
+    
+    for file in "${root_files[@]}"; do
+        local full_file="$project_path/$file"
+        if [[ -f "$full_file" ]]; then
+            echo "📄 Found: $file" >&2
+            
+            if [[ -n "$requirements" ]]; then
+                requirements="$requirements
+
+--- From $file ---
+$(cat "$full_file")"
+            else
+                requirements="$(cat "$full_file")"
+            fi
+        fi
+    done
+    
+    if [[ -n "$requirements" ]]; then
+        echo "$requirements"
+        return 0
+    else
+        echo "ℹ️  No specs found - using standard workflow" >&2
+        return 1
+    fi
+}
+
 # Start agent with simple prompt
 start_agent() {
     local window="$1"
     local role="$2"
     local project_type="$3"
-    
+
     echo "Starting $role in window $window..."
     tmux send-keys -t "$SESSION_NAME:$window" "claude --dangerously-skip-permissions" Enter
     sleep 8  # Increased wait time for Claude to fully start
     
+    # Load custom requirements
+    local custom_req=$(load_custom_requirements "$PROJECT_PATH")
+
+    # Base requirements message
+    local base_msg=""
+    local custom_suffix=""
+    
+    if [[ -n "$custom_req" ]]; then
+        custom_suffix=" IMPORTANT: Follow these custom project requirements: $custom_req"
+    fi
+    
     case "$role" in
         "pm")
-            send_message "$SESSION_NAME:$window" "You are the Project Manager. Collect team status every 4 hours with 'STATUS?'. Enforce 80% test coverage. Block bad merges. Report to orchestrator. Start by checking git status and setting up your first standup in 4 hours."
+            base_msg="You are the Project Manager. Collect team status every 5 minutes with 'STATUS?'. Enforce 80% test coverage. Block bad merges. Report to orchestrator. Start by checking git status and setting up your first standup in 5 minutes."
+            send_message "$SESSION_NAME:$window" "$base_msg$custom_suffix"
             ;;
         "dev")
-            send_message "$SESSION_NAME:$window" "You are a Developer. Commit every 30 minutes max. Use 'feat:', 'fix:', 'test:' in commits. Write tests for everything (80%+ coverage). Work on feature branches only. Start by checking the codebase and creating your first feature branch."
+            base_msg="You are a Developer. Commit every 5 minutes max. Use 'feat:', 'fix:', 'test:' in commits. Write tests for everything (80%+ coverage). Work on feature branches only. Start by checking the codebase and creating your first feature branch."
+            send_message "$SESSION_NAME:$window" "$base_msg$custom_suffix"
             ;;
         "lead")
-            send_message "$SESSION_NAME:$window" "You are the Lead Developer. Make architecture decisions. Review complex code. Handle difficult technical problems. Guide other developers. Start by reviewing the current architecture and creating a technical roadmap."
+            base_msg="You are the Lead Developer. Make architecture decisions. Review complex code. Handle difficult technical problems. Guide other developers. Provide updates every 5 minutes. Start by reviewing the current architecture and creating a technical roadmap."
+            send_message "$SESSION_NAME:$window" "$base_msg$custom_suffix"
             ;;
         "qa")
-            send_message "$SESSION_NAME:$window" "You are the QA Engineer. Ensure 80% test coverage minimum. Set up test automation. Write comprehensive test suites. Block releases that fail tests. Start by analyzing current test coverage and creating a test plan."
+            base_msg="You are the QA Engineer. Ensure 80% test coverage minimum. Set up test automation. Write comprehensive test suites. Block releases that fail tests. Report progress every 5 minutes. Start by analyzing current test coverage and creating a test plan."
+            send_message "$SESSION_NAME:$window" "$base_msg$custom_suffix"
             ;;
         "devops")
-            send_message "$SESSION_NAME:$window" "You are the DevOps Engineer. Set up CI/CD pipelines. Manage deployments. Monitor system health. Handle infrastructure. Start by reviewing the current deployment process and setting up monitoring."
+            base_msg="You are the DevOps Engineer. Set up CI/CD pipelines. Manage deployments. Monitor system health. Handle infrastructure. Update status every 5 minutes. Start by reviewing the current deployment process and setting up monitoring."
+            send_message "$SESSION_NAME:$window" "$base_msg$custom_suffix"
             ;;
     esac
 }
@@ -127,68 +217,68 @@ start_agent() {
 # Create session and deploy team
 main() {
     echo "🚀 Starting tmux orchestrator for $PROJECT_NAME"
-    
+
     # Detect project
     PROJECT_TYPE=$(detect_project_type)
     TEAM_SIZE=$(get_team_size)
-    
+
     echo "📦 Project: $PROJECT_TYPE ($TEAM_SIZE team)"
-    
+
     # Kill existing session
     tmux kill-session -t "$SESSION_NAME" 2>/dev/null || true
-    
+
     # Create session
     tmux new-session -d -s "$SESSION_NAME" -c "$PROJECT_PATH" -n "Orchestrator"
     tmux new-window -t "$SESSION_NAME" -n "Shell" -c "$PROJECT_PATH"
     tmux new-window -t "$SESSION_NAME" -n "Dev-Server" -c "$PROJECT_PATH"
     tmux new-window -t "$SESSION_NAME" -n "Tests" -c "$PROJECT_PATH"
-    
+
     # Start development server
-    start_dev_server "$PROJECT_TYPE" "2"
-    
+    start_dev_server "$PROJECT_TYPE" "Dev-Server"
+
     # Deploy team based on size
     case "$TEAM_SIZE" in
         "small")
-            tmux new-window -t "$SESSION_NAME" -n "Claude-PM" -c "$PROJECT_PATH"
-            tmux new-window -t "$SESSION_NAME" -n "Claude-Dev" -c "$PROJECT_PATH"
-            start_agent "4" "pm" "$PROJECT_TYPE"
-            start_agent "5" "dev" "$PROJECT_TYPE"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-PM" -c "$PROJECT_PATH"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-Dev" -c "$PROJECT_PATH"
+            start_agent "Agent-PM" "pm" "$PROJECT_TYPE"
+            start_agent "Agent-Dev" "dev" "$PROJECT_TYPE"
             ;;
         "medium")
-            tmux new-window -t "$SESSION_NAME" -n "Claude-PM" -c "$PROJECT_PATH"
-            tmux new-window -t "$SESSION_NAME" -n "Claude-Lead" -c "$PROJECT_PATH"
-            tmux new-window -t "$SESSION_NAME" -n "Claude-Dev" -c "$PROJECT_PATH"
-            tmux new-window -t "$SESSION_NAME" -n "Claude-QA" -c "$PROJECT_PATH"
-            start_agent "4" "pm" "$PROJECT_TYPE"
-            start_agent "5" "lead" "$PROJECT_TYPE"
-            start_agent "6" "dev" "$PROJECT_TYPE"
-            start_agent "7" "qa" "$PROJECT_TYPE"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-PM" -c "$PROJECT_PATH"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-Lead" -c "$PROJECT_PATH"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-Dev" -c "$PROJECT_PATH"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-QA" -c "$PROJECT_PATH"
+            start_agent "Agent-PM" "pm" "$PROJECT_TYPE"
+            start_agent "Agent-Lead" "lead" "$PROJECT_TYPE"
+            start_agent "Agent-Dev" "dev" "$PROJECT_TYPE"
+            start_agent "Agent-QA" "qa" "$PROJECT_TYPE"
             ;;
         "large")
-            tmux new-window -t "$SESSION_NAME" -n "Claude-PM" -c "$PROJECT_PATH"
-            tmux new-window -t "$SESSION_NAME" -n "Claude-Tech-Lead" -c "$PROJECT_PATH"
-            tmux new-window -t "$SESSION_NAME" -n "Claude-Senior-Dev" -c "$PROJECT_PATH"
-            tmux new-window -t "$SESSION_NAME" -n "Claude-Dev" -c "$PROJECT_PATH"
-            tmux new-window -t "$SESSION_NAME" -n "Claude-QA" -c "$PROJECT_PATH"
-            tmux new-window -t "$SESSION_NAME" -n "Claude-DevOps" -c "$PROJECT_PATH"
-            start_agent "4" "pm" "$PROJECT_TYPE"
-            start_agent "5" "lead" "$PROJECT_TYPE"
-            start_agent "6" "dev" "$PROJECT_TYPE"
-            start_agent "7" "dev" "$PROJECT_TYPE"
-            start_agent "8" "qa" "$PROJECT_TYPE"
-            start_agent "9" "devops" "$PROJECT_TYPE"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-PM" -c "$PROJECT_PATH"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-Tech-Lead" -c "$PROJECT_PATH"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-Senior-Dev" -c "$PROJECT_PATH"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-Dev" -c "$PROJECT_PATH"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-QA" -c "$PROJECT_PATH"
+            tmux new-window -t "$SESSION_NAME" -n "Agent-DevOps" -c "$PROJECT_PATH"
+            start_agent "Agent-PM" "pm" "$PROJECT_TYPE"
+            start_agent "Agent-Tech-Lead" "lead" "$PROJECT_TYPE"
+            start_agent "Agent-Senior-Dev" "dev" "$PROJECT_TYPE"
+            start_agent "Agent-Dev" "dev" "$PROJECT_TYPE"
+            start_agent "Agent-QA" "qa" "$PROJECT_TYPE"
+            start_agent "Agent-DevOps" "devops" "$PROJECT_TYPE"
             ;;
     esac
-    
+
     # Start orchestrator
-    echo "Starting orchestrator in window 0..."
-    tmux select-window -t "$SESSION_NAME:0"
-    tmux send-keys -t "$SESSION_NAME:0" "claude --dangerously-skip-permissions" Enter
+    echo "Starting orchestrator in Orchestrator window..."
+    tmux select-window -t "$SESSION_NAME:Orchestrator"
+    tmux send-keys -t "$SESSION_NAME:Orchestrator" "claude --dangerously-skip-permissions" Enter
     sleep 8
-    
+
     # Brief orchestrator
-    send_message "$SESSION_NAME:0" "You are the Orchestrator for this $PROJECT_TYPE project ($TEAM_SIZE team). Monitor agent health every 15 minutes. Schedule recurring checks with: ./schedule_with_note.sh 15 'Health check' '$SESSION_NAME:0'. Resolve conflicts and blockers. Make final decisions. Start by scheduling your first health check NOW."
-    
+    send_message "$SESSION_NAME:Orchestrator" "You are the Orchestrator for this $PROJECT_TYPE project ($TEAM_SIZE team). Monitor agent health every 15 minutes. Schedule recurring checks with: ./schedule_with_note.sh 15 'Health check' '$SESSION_NAME:Orchestrator'. Resolve conflicts and blockers. Make final decisions. Start by scheduling your first health check NOW."
+
     echo "✅ Orchestrator deployed!"
     echo "📌 Attach: tmux attach -t $SESSION_NAME"
     echo "🎯 Team: $TEAM_SIZE ($PROJECT_TYPE)"

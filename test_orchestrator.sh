@@ -103,8 +103,21 @@ send_message() {
     local target="$1"
     local message="$2"
     
+    # Check if window exists before sending message
+    # Support both window:name and session:window formats
+    local session="${target%:*}"
+    local window="${target#*:}"
+    
+    if ! tmux list-windows -t "$session" -F '#{window_name}' | grep -q "^${window}$"; then
+        echo "Warning: Window $target not found, skipping message"
+        return 1
+    fi
+    
     echo "$message" | tmux load-buffer -
-    tmux paste-buffer -t "$target"
+    tmux paste-buffer -t "$target" 2>/dev/null || {
+        echo "Warning: Failed to send message to $target"
+        return 1
+    }
     tmux send-keys -t "$target" Enter
 }
 
@@ -221,12 +234,12 @@ EOF
 test_message_sending() {
     echo "Testing message sending..."
     
-    # Create temporary tmux session for testing
-    tmux new-session -d -s "$TEST_SESSION" -c "$TEST_PROJECT_DIR" 2>/dev/null || true
+    # Create temporary tmux session for testing with named windows
+    tmux new-session -d -s "$TEST_SESSION" -n "test-window" -c "$TEST_PROJECT_DIR" 2>/dev/null || true
     sleep 2
     
     # Test send_message function - just verify it doesn't crash
-    send_message "$TEST_SESSION:0" "echo 'test message'" 2>/dev/null || {
+    send_message "$TEST_SESSION:test-window" "echo 'test message'" 2>/dev/null || {
         echo "✓ Message sending function exists and runs (tmux session may not be available)"
     }
     
@@ -260,7 +273,7 @@ test_schedule_script() {
     mkdir -p "$HOME/work"
     
     # Test schedule script with minimal parameters
-    result=$("$SCRIPT_DIR/schedule_with_note.sh" 1 "Test note" "dummy:0" 2>&1)
+    result=$("$SCRIPT_DIR/schedule_with_note.sh" 1 "Test note" "dummy:Orchestrator" 2>&1)
     [[ "$result" == *"Scheduled successfully"* ]] || { echo "FAIL: Schedule script failed: $result"; return 1; }
     echo "✓ Schedule script works"
     

@@ -51,6 +51,19 @@ That's it. Everything else is automatic.
 └─────────────────┘
 ```
 
+## 📦 Window Naming
+
+All windows use descriptive names for universal compatibility:
+- `Orchestrator` - Main control center
+- `Shell` - Manual commands
+- `Dev-Server` - Development server
+- `Tests` - Test runner
+- `Agent-PM` - Project Manager
+- `Agent-Dev` - Developer(s)
+- `Agent-Lead` - Lead Developer
+- `Agent-QA` - QA Engineer
+- `Agent-DevOps` - DevOps Engineer
+
 ## 📋 Agent Behavior
 
 **✅ Good Developer:**
@@ -108,6 +121,20 @@ PM: No commits for 2+ hours
 → Report to orchestrator for replacement
 ```
 
+## 📋 Using Your Existing Specs
+
+**The orchestrator finds and follows your existing project documentation automatically.**
+
+Put your specs in any of these common locations:
+- `specs/` - Technical specifications
+- `epics/` - Epic definitions  
+- `stories/` - User stories
+- `requirements/` - Business requirements
+- `docs/` - General documentation
+- Root files: `README.md`, `requirements.md`, etc.
+
+**No special setup required.** Use whatever structure you already have.
+
 ## 📁 Files
 
 - `CLAUDE.md` - Agent instructions and behavior patterns
@@ -119,7 +146,7 @@ PM: No commits for 2+ hours
 
 **Critical: Self-Schedule at startup:**
 ```bash
-./schedule_with_note.sh 15 "Health check" "$(tmux display-message -p '#{session_name}:#{window_index}')"
+./schedule_with_note.sh 15 "Health check" "$(tmux display-message -p '#{session_name}:#{window_name}')"
 ```
 
 **Monitor agent health every 15 minutes**

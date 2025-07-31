@@ -4,7 +4,7 @@
 
 MINUTES=${1:-3}
 NOTE=${2:-"Standard check-in"}
-TARGET=${3:-"tmux-orc:0"}
+TARGET=${3:-"tmux-orc:Orchestrator"}
 PROJECT_DIR=$HOME/work
 NOTE_FILE=$PROJECT_DIR/next_check_note.txt
 
