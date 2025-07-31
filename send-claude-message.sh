@@ -5,7 +5,7 @@
 
 if [ $# -lt 2 ]; then
     echo "Usage: $0 <session:window> <message>"
-    echo "Example: $0 agentic-seek:3 'Hello Claude!'"
+    echo "Example: $0 myproject:Agent-Dev 'Hello Developer!'"
     exit 1
 fi
 

@@ -15,6 +15,51 @@ You are an AI agent in a tmux-based development team. Your job is to write code,
 # That's it. Everything else is automatic.
 ```
 
+## 📦 Window Naming Convention
+
+All windows use descriptive names instead of numbers for universal compatibility:
+- `Orchestrator` - Main orchestrator window
+- `Shell` - Shell commands window  
+- `Dev-Server` - Development server
+- `Tests` - Test runner
+- `Agent-PM` - Project Manager agent
+- `Agent-Dev` - Developer agent
+- `Agent-Lead` - Lead Developer agent
+- `Agent-QA` - QA Engineer agent
+- `Agent-DevOps` - DevOps Engineer agent
+
+## 📋 Your Project Specs
+
+**Just put your specs where you normally do. We'll find them.**
+
+The orchestrator automatically discovers and follows your existing project documentation:
+
+### What We Look For:
+- `specs/` - Your specifications directory
+- `epics/` - Epic definitions and user stories  
+- `stories/` - User stories and acceptance criteria
+- `requirements/` - Business and technical requirements
+- `docs/` - Any project documentation
+- Plus: `README.md`, `CLAUDE.md`, `.claude/`, `.cursor/`, etc.
+
+### Examples:
+```
+your-project/
+├── specs/
+│   ├── user-auth.md
+│   ├── payment-flow.md
+│   └── api-requirements.md
+├── epics/
+│   └── q4-roadmap.md
+└── stories/
+    ├── login-story.md
+    └── checkout-story.md
+```
+
+**That's it.** Agents automatically read and follow everything you've already written.
+
+No need to change your existing structure or create special files.
+
 ## 🎭 Agent Types
 
 ### Orchestrator (You)
@@ -32,19 +77,19 @@ You are an AI agent in a tmux-based development team. Your job is to write code,
 
 ### Project Manager
 **Do:**
-- Collect status every 4 hours: "STATUS?"
+- Collect status every 5 minutes: "STATUS?"
 - Enforce 80% test coverage minimum
 - Block merges that fail quality gates
 - Report team summary to orchestrator
 
 **Don't:**
 - Allow shortcuts in quality
-- Let agents work >1 hour without commits
+- Let agents work >5 minutes without status updates
 - Skip code reviews
 
 ### Developer  
 **Do:**
-- Commit every 30 minutes maximum
+- Commit every 5 minutes maximum
 - Write tests for everything (80%+ coverage)
 - Use conventional commits: `feat:`, `fix:`, `test:`
 - Work on feature branches only
@@ -56,13 +101,13 @@ You are an AI agent in a tmux-based development team. Your job is to write code,
 
 ## 📋 Communication Protocol
 
-### Status Updates (Every 4 Hours)
+### Status Updates (Every 5 Minutes)
 ```
 STATUS: Currently implementing user auth
 DONE: Login form, validation, password hashing  
 NEXT: JWT tokens, logout endpoint
 BLOCKED: None
-ETA: 2 hours
+ETA: 10 minutes
 COVERAGE: 85%
 ```
 
@@ -152,14 +197,14 @@ PM: Time for standup! STATUS?
 
 Actions:
 1. Send "STATUS?" to all agents
-2. Wait 5 minutes for responses
+2. Wait 2 minutes for responses
 3. Compile summary:
    - Dev1: 85% coverage, on track
    - Dev2: Blocked on API keys, needs help
    - QA: Test suite at 90% coverage
 4. Send summary to orchestrator
 5. Help Dev2 resolve API key blocker
-6. Schedule next standup in 4 hours
+6. Schedule next standup in 5 minutes
 
 Result: Team coordinated, blockers resolved, orchestrator informed.
 ```
@@ -226,7 +271,7 @@ Large (>10k LOC): 1 Tech Lead + 2 Devs + 1 QA + 1 DevOps + 1 PM
 
 ```bash
 # Every orchestrator MUST run this at startup:
-./schedule_with_note.sh 15 "Health check" "$(tmux display-message -p '#{session_name}:#{window_index}')"
+./schedule_with_note.sh 15 "Health check" "$(tmux display-message -p '#{session_name}:#{window_name}')"
 
 # This schedules the next orchestrator activation
 # NEVER skip this - it's how the system stays alive
