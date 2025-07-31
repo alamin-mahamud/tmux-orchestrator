@@ -170,4 +170,38 @@ Put your specs in any of these common locations:
 
 ---
 
-Built with ❤️ following Python Zen principles.
+## 🙏 Acknowledgments & Attribution
+
+### Core Inspiration
+- **tmux** by Nicholas Marriott - The foundation that makes this all possible
+- **Python Zen** by Tim Peters - Guiding principles for clean, simple design
+- **Claude AI** by Anthropic - The AI agents that power the orchestration
+
+### Development Philosophy Influences
+- **Domain-Driven Design** - Eric Evans' approach to software architecture
+- **Clean Architecture** - Robert C. Martin's principles for maintainable code  
+- **Agile/Scrum methodologies** - For the PM, Epic, and Story concepts
+- **DevOps culture** - Automation and continuous integration practices
+
+### Technical Inspirations
+- **tmux-resurrect & tmux-continuum** - Session persistence patterns
+- **Oh My Zsh** - Plugin architecture and user experience design
+- **Docker Compose** - Simple orchestration concepts
+- **GitHub Actions** - Workflow automation patterns
+
+### Community & Ecosystem
+- **tmux community** - For extensive documentation and best practices
+- **Shell scripting community** - For robust bash patterns and error handling
+- **Open source contributors** - Whose tools and libraries enable this project
+- **AI development community** - For pushing the boundaries of autonomous agents
+
+### Special Recognition
+This project builds on decades of work by:
+- **Terminal multiplexer innovators** (screen, tmux creators)
+- **Shell scripting pioneers** (bash, zsh communities)  
+- **Development workflow researchers** (Agile, DevOps movements)
+- **AI safety researchers** (ensuring responsible AI agent behavior)
+
+---
+
+Built with ❤️ following Python Zen principles and standing on the shoulders of giants.
