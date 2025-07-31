@@ -276,8 +276,16 @@ main() {
     tmux send-keys -t "$SESSION_NAME:Orchestrator" "claude --dangerously-skip-permissions" Enter
     sleep 8
 
+    # Load custom requirements for orchestrator
+    local custom_req=$(load_custom_requirements "$PROJECT_PATH")
+    local orchestrator_msg="You are the Orchestrator for this $PROJECT_TYPE project ($TEAM_SIZE team) in directory $PROJECT_PATH. Monitor agent health every 15 minutes. Schedule recurring checks with: $PROJECT_PATH/schedule_with_note.sh 15 'Health check' '$SESSION_NAME:Orchestrator'. Use $PROJECT_PATH/send-claude-message.sh to communicate with agents. Resolve conflicts and blockers. Make final decisions. Start by scheduling your first health check NOW."
+    
+    if [[ -n "$custom_req" ]]; then
+        orchestrator_msg="$orchestrator_msg IMPORTANT: Follow these custom project requirements: $custom_req"
+    fi
+    
     # Brief orchestrator
-    send_message "$SESSION_NAME:Orchestrator" "You are the Orchestrator for this $PROJECT_TYPE project ($TEAM_SIZE team). Monitor agent health every 15 minutes. Schedule recurring checks with: ./schedule_with_note.sh 15 'Health check' '$SESSION_NAME:Orchestrator'. Resolve conflicts and blockers. Make final decisions. Start by scheduling your first health check NOW."
+    send_message "$SESSION_NAME:Orchestrator" "$orchestrator_msg"
 
     echo "✅ Orchestrator deployed!"
     echo "📌 Attach: tmux attach -t $SESSION_NAME"
