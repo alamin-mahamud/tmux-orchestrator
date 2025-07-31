@@ -13,7 +13,7 @@ fi
 
 PROJECT_PATH=$(realpath "$PROJECT_PATH")
 PROJECT_NAME=$(basename "$PROJECT_PATH")
-SESSION_NAME=$(echo "$PROJECT_NAME" | tr ' A-Z' '-a-z')
+SESSION_NAME=$(echo "$PROJECT_NAME" | tr ' A-Z' '-a-z' | sed 's/^\.//g')
 
 # Simple project type detection
 detect_project_type() {
@@ -85,7 +85,7 @@ send_message() {
     # Support both window:name and session:window formats
     local session="${target%:*}"
     local window="${target#*:}"
-    
+
     if ! tmux list-windows -t "$session" -F '#{window_name}' | grep -q "^${window}$"; then
         echo "Warning: Window $target not found, skipping message"
         return 1
@@ -103,28 +103,28 @@ send_message() {
 load_custom_requirements() {
     local project_path="$1"
     local requirements=""
-    
+
     # Find customer's existing directories (don't force them to change)
     local common_dirs=(
-        "specs" "epics" "stories" "requirements" 
+        "specs" "epics" "stories" "requirements"
         "docs" ".claude" ".cursor" ".ai"
     )
-    
+
     echo "🔍 Looking for your project specs..." >&2
-    
+
     # Scan each directory if it exists
     for dir in "${common_dirs[@]}"; do
         local full_path="$project_path/$dir"
-        
+
         if [[ -d "$full_path" ]]; then
             echo "📁 Found: $dir/" >&2
-            
+
             # Read all markdown files in the directory
             while IFS= read -r -d '' file; do
                 if [[ -f "$file" ]]; then
                     local filename=$(basename "$file")
                     echo "📄 Reading: $dir/$filename" >&2
-                    
+
                     if [[ -n "$requirements" ]]; then
                         requirements="$requirements
 
@@ -137,18 +137,18 @@ $(cat "$file")"
             done < <(find "$full_path" -name "*.md" -type f -print0 2>/dev/null)
         fi
     done
-    
+
     # Also check root-level files (common patterns)
     local root_files=(
         "requirements.md" "REQUIREMENTS.md" "specs.md" "SPECS.md"
         "README.md" "CLAUDE.md" "project.md" "PROJECT.md"
     )
-    
+
     for file in "${root_files[@]}"; do
         local full_file="$project_path/$file"
         if [[ -f "$full_file" ]]; then
             echo "📄 Found: $file" >&2
-            
+
             if [[ -n "$requirements" ]]; then
                 requirements="$requirements
 
@@ -159,7 +159,7 @@ $(cat "$full_file")"
             fi
         fi
     done
-    
+
     if [[ -n "$requirements" ]]; then
         echo "$requirements"
         return 0
@@ -178,18 +178,18 @@ start_agent() {
     echo "Starting $role in window $window..."
     tmux send-keys -t "$SESSION_NAME:$window" "claude --dangerously-skip-permissions" Enter
     sleep 8  # Increased wait time for Claude to fully start
-    
+
     # Load custom requirements
     local custom_req=$(load_custom_requirements "$PROJECT_PATH")
 
     # Base requirements message
     local base_msg=""
     local custom_suffix=""
-    
+
     if [[ -n "$custom_req" ]]; then
         custom_suffix=" IMPORTANT: Follow these custom project requirements: $custom_req"
     fi
-    
+
     case "$role" in
         "pm")
             base_msg="You are the Project Manager. Collect team status every 5 minutes with 'STATUS?'. Enforce 80% test coverage. Block bad merges. Report to orchestrator. Start by checking git status and setting up your first standup in 5 minutes."
@@ -222,7 +222,7 @@ main() {
     PROJECT_TYPE=$(detect_project_type)
     TEAM_SIZE=$(get_team_size)
 
-    echo "📦 Project: $PROJECT_TYPE ($TEAM_SIZE team)"
+    echo "📦 Project: $PROJECT_TYPE ($TEAM_SIZE team), path: $PROJECT_PATH, session: $SESSION_NAME"
 
     # Kill existing session
     tmux kill-session -t "$SESSION_NAME" 2>/dev/null || true
