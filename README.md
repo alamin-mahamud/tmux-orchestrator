@@ -138,9 +138,57 @@ Put your specs in any of these common locations:
 ## 📁 Files
 
 - `CLAUDE.md` - Agent instructions and behavior patterns
-- `orchestrator.sh` - Single entry point script
-- `schedule_with_note.sh` - Self-scheduling utility
-- `send-claude-message.sh` - Agent communication utility
+- `orchestrator.sh` - Single entry point script that auto-detects projects and deploys teams
+- `schedule_with_note.sh` - Self-scheduling utility for autonomous agent check-ins
+- `send-claude-message.sh` - Cross-agent communication utility
+- `test_simple.sh` - Simple orchestrator functionality test
+
+## 🔧 How Agent Autonomy Works
+
+**The key innovation**: Each agent gets immediate actionable instructions and tools for self-operation.
+
+### Agent Activation Process
+1. **Orchestrator starts Claude** in each agent window
+2. **Agent receives role-specific prompt** with:
+   - Clear responsibilities and tools
+   - Absolute paths to orchestrator scripts
+   - Immediate ACTION NOW steps to execute
+3. **Agent self-schedules** recurring check-ins using `schedule_with_note.sh`
+4. **Autonomous operation** continues via scheduled activations
+
+### Example Agent Flow
+```bash
+# Developer agent receives this instruction:
+"You are a Developer in /path/to/project. 
+Your tools: schedule self-checks with '/path/to/schedule_with_note.sh <minutes> <note> <window>'.
+ACTION NOW: 
+1) Run 'git status' 
+2) Create feature branch 
+3) Start implementing and schedule check: /path/to/schedule_with_note.sh 5 'Dev progress check' 'session:Agent-Dev'"
+
+# Agent executes immediately:
+git status
+git checkout -b feature/new-feature
+# work...
+./schedule_with_note.sh 5 "Dev progress check" "project:Agent-Dev"
+```
+
+## 🐛 Troubleshooting
+
+### Agents Not Responding
+- **Symptom**: Windows created but no activity
+- **Cause**: Claude not starting or commands not executing
+- **Fix**: Increase sleep time in `orchestrator.sh` (line 183, 280)
+
+### Scheduling Issues
+- **Symptom**: Agents don't self-schedule recurring checks
+- **Cause**: Invalid paths to `schedule_with_note.sh` 
+- **Fix**: Ensure scripts are executable: `chmod +x *.sh`
+
+### Communication Failures
+- **Symptom**: Agents can't send messages to each other
+- **Cause**: Window names don't match
+- **Fix**: Use exact window names from `tmux list-windows -t session`
 
 ## 🎮 For Orchestrators
 

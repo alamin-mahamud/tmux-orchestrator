@@ -23,7 +23,7 @@ RUN_TIME=$(date -v +${MINUTES}M +"%H:%M:%S" 2>/dev/null || date -d "+${MINUTES} 
 # Use nohup to completely detach the sleep process
 # Use bc for floating point calculation
 SECONDS=$(echo "$MINUTES * 60" | bc)
-nohup bash -c "sleep $SECONDS && tmux send-keys -t $TARGET 'Time for orchestrator check! cat $NOTE_FILE && python3 claude_control.py status detailed' && sleep 1 && tmux send-keys -t $TARGET Enter" > /dev/null 2>&1 &
+nohup bash -c "sleep $SECONDS && tmux send-keys -t $TARGET 'Time for orchestrator check! Note: $NOTE' && sleep 1 && tmux send-keys -t $TARGET Enter" > /dev/null 2>&1 &
 
 # Get the PID of the background process
 SCHEDULE_PID=$!

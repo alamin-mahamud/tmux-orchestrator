@@ -241,6 +241,52 @@ Medium (<10k LOC): 1 Lead + 1 Dev + 1 QA + 1 PM
 Large (>10k LOC): 1 Tech Lead + 2 Devs + 1 QA + 1 DevOps + 1 PM
 ```
 
+## 🔄 Agent Autonomy Implementation
+
+**Critical**: Each agent must receive explicit ACTION NOW instructions and tool paths for autonomous operation.
+
+### Agent Activation Pattern
+```bash
+# 1. Start Claude in window
+tmux send-keys -t "$SESSION:$WINDOW" "claude --dangerously-skip-permissions" Enter
+sleep 8  # Wait for Claude to fully load
+
+# 2. Send role-specific prompt with:
+#    - Role responsibilities
+#    - Absolute paths to orchestrator tools
+#    - Immediate actionable steps
+#    - Self-scheduling command
+
+# Example for Developer:
+base_msg="You are a Developer in $PROJECT_PATH. 
+Your tools: schedule self-checks with '$ORCHESTRATOR_DIR/schedule_with_note.sh <minutes> <note> <window>'. 
+ACTION NOW: 
+1) Run 'git status' 
+2) Create feature branch 
+3) Start implementing and schedule check: $ORCHESTRATOR_DIR/schedule_with_note.sh 5 'Dev progress check' '$SESSION_NAME:$window'"
+```
+
+### Self-Scheduling System
+```bash
+# Each agent MUST self-schedule to remain autonomous
+./schedule_with_note.sh 5 "Status update" "session:Agent-Dev"
+
+# This creates a background process that will:
+# 1. Sleep for specified minutes
+# 2. Send scheduled message to agent window
+# 3. Activate agent for next work cycle
+```
+
+### Tool Paths (Always Absolute)
+```bash
+# In orchestrator.sh - provide absolute paths:
+ORCHESTRATOR_DIR=$(dirname "$(realpath "$0")")
+
+# Agents receive:
+"$ORCHESTRATOR_DIR/send-claude-message.sh <session:window> <message>"
+"$ORCHESTRATOR_DIR/schedule_with_note.sh <minutes> <note> <window>"
+```
+
 ## 🚨 Emergency Protocols
 
 ### Production Down

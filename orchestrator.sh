@@ -195,23 +195,23 @@ start_agent() {
 
     case "$role" in
         "pm")
-            base_msg="You are the Project Manager. Collect team status every 5 minutes with 'STATUS?'. Enforce 80% test coverage. Block bad merges. Report to orchestrator. Start by checking git status and setting up your first standup in 5 minutes."
+            base_msg="You are the Project Manager in $PROJECT_PATH. Your tools: send messages with '$ORCHESTRATOR_DIR/send-claude-message.sh <window> <message>', schedule checks with '$ORCHESTRATOR_DIR/schedule_with_note.sh <minutes> <note> <window>'. Collect team status every 5 minutes with 'STATUS?'. Enforce 80% test coverage. Block bad merges. Report to orchestrator. ACTION NOW: 1) Check git status 2) Send 'STATUS?' to all team members 3) Schedule your next check with: $ORCHESTRATOR_DIR/schedule_with_note.sh 5 'Team standup' '$SESSION_NAME:$window'"
             send_message "$SESSION_NAME:$window" "$base_msg$custom_suffix"
             ;;
         "dev")
-            base_msg="You are a Developer. Commit every 5 minutes max. Use 'feat:', 'fix:', 'test:' in commits. Write tests for everything (80%+ coverage). Work on feature branches only. Start by checking the codebase and creating your first feature branch."
+            base_msg="You are a Developer in $PROJECT_PATH. Your tools: schedule self-checks with '$ORCHESTRATOR_DIR/schedule_with_note.sh <minutes> <note> <window>'. Commit every 5 minutes max. Use 'feat:', 'fix:', 'test:' in commits. Write tests for everything (80%+ coverage). Work on feature branches only. ACTION NOW: 1) Run 'git status' 2) Create feature branch 3) Start implementing and schedule check: $ORCHESTRATOR_DIR/schedule_with_note.sh 5 'Dev progress check' '$SESSION_NAME:$window'"
             send_message "$SESSION_NAME:$window" "$base_msg$custom_suffix"
             ;;
         "lead")
-            base_msg="You are the Lead Developer. Make architecture decisions. Review complex code. Handle difficult technical problems. Guide other developers. Provide updates every 5 minutes. Start by reviewing the current architecture and creating a technical roadmap."
+            base_msg="You are the Lead Developer in $PROJECT_PATH. Your tools: send messages with '$ORCHESTRATOR_DIR/send-claude-message.sh <window> <message>', schedule checks with '$ORCHESTRATOR_DIR/schedule_with_note.sh <minutes> <note> <window>'. Make architecture decisions. Review complex code. Handle difficult technical problems. Guide other developers. ACTION NOW: 1) Review project structure 2) Create technical roadmap 3) Schedule review: $ORCHESTRATOR_DIR/schedule_with_note.sh 5 'Architecture review' '$SESSION_NAME:$window'"
             send_message "$SESSION_NAME:$window" "$base_msg$custom_suffix"
             ;;
         "qa")
-            base_msg="You are the QA Engineer. Ensure 80% test coverage minimum. Set up test automation. Write comprehensive test suites. Block releases that fail tests. Report progress every 5 minutes. Start by analyzing current test coverage and creating a test plan."
+            base_msg="You are the QA Engineer in $PROJECT_PATH. Your tools: schedule self-checks with '$ORCHESTRATOR_DIR/schedule_with_note.sh <minutes> <note> <window>'. Ensure 80% test coverage minimum. Set up test automation. Write comprehensive test suites. Block releases that fail tests. ACTION NOW: 1) Check current test coverage 2) Create test plan 3) Schedule check: $ORCHESTRATOR_DIR/schedule_with_note.sh 5 'Test coverage update' '$SESSION_NAME:$window'"
             send_message "$SESSION_NAME:$window" "$base_msg$custom_suffix"
             ;;
         "devops")
-            base_msg="You are the DevOps Engineer. Set up CI/CD pipelines. Manage deployments. Monitor system health. Handle infrastructure. Update status every 5 minutes. Start by reviewing the current deployment process and setting up monitoring."
+            base_msg="You are the DevOps Engineer in $PROJECT_PATH. Your tools: schedule self-checks with '$ORCHESTRATOR_DIR/schedule_with_note.sh <minutes> <note> <window>'. Set up CI/CD pipelines. Manage deployments. Monitor system health. Handle infrastructure. ACTION NOW: 1) Review deployment process 2) Set up monitoring 3) Schedule check: $ORCHESTRATOR_DIR/schedule_with_note.sh 5 'Infrastructure health' '$SESSION_NAME:$window'"
             send_message "$SESSION_NAME:$window" "$base_msg$custom_suffix"
             ;;
     esac
@@ -281,7 +281,18 @@ main() {
 
     # Load custom requirements for orchestrator
     local custom_req=$(load_custom_requirements "$PROJECT_PATH")
-    local orchestrator_msg="You are the Orchestrator for this $PROJECT_TYPE project ($TEAM_SIZE team) in directory $PROJECT_PATH. Monitor agent health every 15 minutes. Schedule recurring checks with: $ORCHESTRATOR_DIR/schedule_with_note.sh 15 'Health check' '$SESSION_NAME:Orchestrator'. Use $ORCHESTRATOR_DIR/send-claude-message.sh to communicate with agents. Resolve conflicts and blockers. Make final decisions. Start by scheduling your first health check NOW."
+    local orchestrator_msg="You are the Orchestrator for this $PROJECT_TYPE project ($TEAM_SIZE team) in directory $PROJECT_PATH. Your team is deployed in these windows: $(tmux list-windows -t "$SESSION_NAME" -F '#{window_name}' | grep 'Agent-' | tr '\n' ', ' | sed 's/, $//').
+
+YOUR TOOLS:
+- Send messages: $ORCHESTRATOR_DIR/send-claude-message.sh <session:window> <message>
+- Schedule checks: $ORCHESTRATOR_DIR/schedule_with_note.sh <minutes> <note> <window>
+
+ACTION NOW:
+1. Schedule your recurring health check: $ORCHESTRATOR_DIR/schedule_with_note.sh 15 'Health check all agents' '$SESSION_NAME:Orchestrator'
+2. Send initial ping to all agents to verify they're active
+3. Monitor for blockers and conflicts
+
+Remember: Agents will self-schedule and report status. You coordinate and resolve issues."
     
     if [[ -n "$custom_req" ]]; then
         orchestrator_msg="$orchestrator_msg IMPORTANT: Follow these custom project requirements: $custom_req"
