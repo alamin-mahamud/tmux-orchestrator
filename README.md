@@ -173,6 +173,7 @@ Put your specs in any of these common locations:
 ## 🙏 Acknowledgments & Attribution
 
 ### Core Inspiration
+- **Original Tmux-Orchestrator** by [Jedward23](https://github.com/Jedward23/Tmux-Orchestrator) - The foundational concept and initial implementation
 - **tmux** by Nicholas Marriott - The foundation that makes this all possible
 - **Python Zen** by Tim Peters - Guiding principles for clean, simple design
 - **Claude AI** by Anthropic - The AI agents that power the orchestration
