@@ -15,6 +15,9 @@ PROJECT_PATH=$(realpath "$PROJECT_PATH")
 PROJECT_NAME=$(basename "$PROJECT_PATH")
 SESSION_NAME=$(echo "$PROJECT_NAME" | tr ' A-Z' '-a-z' | sed 's/^\.//g')
 
+# Get the directory where this orchestrator script is located
+ORCHESTRATOR_DIR=$(dirname "$(realpath "$0")")
+
 # Simple project type detection
 detect_project_type() {
     if [[ -f "$PROJECT_PATH/package.json" ]]; then
@@ -278,7 +281,7 @@ main() {
 
     # Load custom requirements for orchestrator
     local custom_req=$(load_custom_requirements "$PROJECT_PATH")
-    local orchestrator_msg="You are the Orchestrator for this $PROJECT_TYPE project ($TEAM_SIZE team) in directory $PROJECT_PATH. Monitor agent health every 15 minutes. Schedule recurring checks with: $PROJECT_PATH/schedule_with_note.sh 15 'Health check' '$SESSION_NAME:Orchestrator'. Use $PROJECT_PATH/send-claude-message.sh to communicate with agents. Resolve conflicts and blockers. Make final decisions. Start by scheduling your first health check NOW."
+    local orchestrator_msg="You are the Orchestrator for this $PROJECT_TYPE project ($TEAM_SIZE team) in directory $PROJECT_PATH. Monitor agent health every 15 minutes. Schedule recurring checks with: $ORCHESTRATOR_DIR/schedule_with_note.sh 15 'Health check' '$SESSION_NAME:Orchestrator'. Use $ORCHESTRATOR_DIR/send-claude-message.sh to communicate with agents. Resolve conflicts and blockers. Make final decisions. Start by scheduling your first health check NOW."
     
     if [[ -n "$custom_req" ]]; then
         orchestrator_msg="$orchestrator_msg IMPORTANT: Follow these custom project requirements: $custom_req"
