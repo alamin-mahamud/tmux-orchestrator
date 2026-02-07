@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  shellcheck:
+    runs-on: homelab-runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: |
+          if ! command -v shellcheck &>/dev/null; then
+            sudo apt-get update && sudo apt-get install -y shellcheck
+          fi
+
+      - name: Lint shell scripts
+        run: shellcheck orchestrator.sh send-claude-message.sh schedule_with_note.sh
+
+  test:
+    runs-on: homelab-runner
+    needs: shellcheck
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests
+        run: bash test_orchestrator.sh
